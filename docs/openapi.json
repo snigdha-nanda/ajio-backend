@@ -1,0 +1,518 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+      "title": "AJIO-Clone Backend API",
+      "version": "1.0.0",
+      "description": "Netlify Functions + Supabase backend for products and cart management."
+    },
+    "servers": [
+      {
+        "url": "https://{site}.netlify.app/.netlify/functions",
+        "description": "Deployed Netlify Functions",
+        "variables": {
+          "site": {
+            "default": "your-netlify-site",
+            "description": "Your Netlify site subdomain"
+          }
+        }
+      },
+      {
+        "url": "http://localhost:8888/.netlify/functions",
+        "description": "Local Netlify Dev"
+      }
+    ],
+    "paths": {
+      "/products": {
+        "get": {
+          "tags": ["Products"],
+          "summary": "List all products",
+          "description": "Returns an array of all products, each with id, name, and image URL.",
+          "responses": {
+            "200": {
+              "description": "Array of product summaries",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/ProductSummary"
+                    }
+                  },
+                  "examples": {
+                    "sample": {
+                      "value": [
+                        {
+                          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                          "name": "Classic Leather Jacket",
+                          "image": "https://.../products/jacket-123.png"
+                        },
+                        {
+                          "id": "7cf35f64-5717-4562-b3fc-2c963f66afa7",
+                          "name": "Sport Running Shoes",
+                          "image": "https://.../products/shoes-456.png"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "example": {
+                    "error": "Database connection failed"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/products/{id}": {
+        "get": {
+          "tags": ["Products"],
+          "summary": "Get product details",
+          "description": "Returns detailed information for a single product.",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "description": "UUID of the product",
+              "schema": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Product detail",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProductDetail"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Product not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "example": {
+                    "error": "Product not found"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/cart": {
+        "post": {
+          "tags": ["Cart"],
+          "summary": "Create a new cart",
+          "description": "Creates a new cart for a given user.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartCreateRequest"
+                },
+                "example": {
+                  "userId": "user-123"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Cart created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/CartCreateResponse"
+                  },
+                  "example": {
+                    "cartId": "5e1d6f64-5717-4562-b3fc-2c963f66afb0"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "example": {
+                    "error": "Missing userId"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/cart/{cartId}": {
+        "get": {
+          "tags": ["Cart"],
+          "summary": "Get cart items",
+          "description": "Returns list of product IDs and quantities for a cart.",
+          "parameters": [
+            {
+              "name": "cartId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "description": "UUID of the cart"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Array of cart items",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/CartItem"
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Cart not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "put": {
+          "tags": ["Cart"],
+          "summary": "Add or update a cart item",
+          "description": "Upserts a single product/quantity pair in the cart.",
+          "parameters": [
+            {
+              "name": "cartId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "description": "UUID of the cart"
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartItemRequest"
+                },
+                "example": {
+                  "productId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                  "quantity": 2
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Upserted cart item",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/CartItemRequest"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Cart not found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/cart/user/{userId}": {
+        "get": {
+          "tags": ["Cart"],
+          "summary": "Get cart ID by user",
+          "description": "Returns the cart ID associated with a given user.",
+          "parameters": [
+            {
+              "name": "userId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "User identifier"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Cart ID lookup",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/CartCreateResponse"
+                  },
+                  "example": {
+                    "cartId": "5e1d6f64-5717-4562-b3fc-2c963f66afb0"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Cart not found for user",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/docs": {
+        "get": {
+          "tags": ["Documentation"],
+          "summary": "Get API documentation",
+          "description": "Returns the OpenAPI JSON specification for this API.",
+          "responses": {
+            "200": {
+              "description": "OpenAPI JSON document",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Unable to load documentation",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Error"
+                  },
+                  "example": {
+                    "error": "Could not load API documentation."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "ProductSummary": {
+          "type": "object",
+          "required": ["id", "name", "image"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "name": {
+              "type": "string"
+            },
+            "image": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        },
+        "ProductDetail": {
+          "type": "object",
+          "required": [
+            "title",
+            "description",
+            "actual_price",
+            "discounted_price",
+            "discount_percentage"
+          ],
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "short_description": {
+              "type": "string"
+            },
+            "ratings": {
+              "type": "number"
+            },
+            "review_count": {
+              "type": "integer"
+            },
+            "actual_price": {
+              "type": "number"
+            },
+            "discounted_price": {
+              "type": "number"
+            },
+            "discount_percentage": {
+              "type": "number"
+            },
+            "additional_details": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "image_path": {
+              "type": "string"
+            }
+          }
+        },
+        "CartCreateRequest": {
+          "type": "object",
+          "required": ["userId"],
+          "properties": {
+            "userId": {
+              "type": "string"
+            }
+          }
+        },
+        "CartCreateResponse": {
+          "type": "object",
+          "properties": {
+            "cartId": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "CartItem": {
+          "type": "object",
+          "required": ["product_id", "quantity"],
+          "properties": {
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "quantity": {
+              "type": "integer"
+            }
+          }
+        },
+        "CartItemRequest": {
+          "type": "object",
+          "required": ["productId", "quantity"],
+          "properties": {
+            "productId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "quantity": {
+              "type": "integer"
+            }
+          }
+        },
+        "Error": {
+          "type": "object",
+          "properties": {
+            "error": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+  
