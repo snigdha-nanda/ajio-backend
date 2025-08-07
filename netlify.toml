@@ -1,0 +1,8 @@
+# netlify.toml (at project root next to package.json)
+
+[build]
+  functions = "functions"
+
+[dev]
+  functions = "functions"
+  publish   = "."

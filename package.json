@@ -1,0 +1,13 @@
+{
+    "name": "my-netlify-backend",
+    "version": "1.0.0",
+    "scripts": {
+        "start": "netlify dev"
+    },
+    "dependencies": {
+        "@supabase/supabase-js": "^2.53.0"
+    },
+    "devDependencies": {
+        "netlify-cli": "^12.14.0"
+    }
+}
