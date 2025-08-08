@@ -1,81 +1,93 @@
-
 const supabase = require('../supabase');
+const { requireUser } = require('./auth');
+
+const corsHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Dev-Key, X-User-Id',
+  'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+};
 
 exports.handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers: corsHeaders, body: '' };
+  }
+
   const { httpMethod, queryStringParameters, body } = event;
 
-  // 1) GET all or one
-  if (httpMethod === 'GET') {
-    const { key } = queryStringParameters || {};
-    if (key) {
-      // fetch single entry
-      const { data, error } = await supabase
-        .from('config')
-        .select('value')
-        .eq('key', key)
-        .maybeSingle();
+  try {
+    // GET operations are public for config values
+    if (httpMethod === 'GET') {
+      const { key } = queryStringParameters || {};
+      
+      if (key) {
+        const { data, error } = await supabase
+          .from('config')
+          .select('value')
+          .eq('key', key)
+          .maybeSingle();
 
-      if (error) {
-        return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
-      }
-      if (!data) {
-        return { statusCode: 404, body: JSON.stringify({ error: 'Not found' }) };
-      }
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ key, value: data.value }),
-      };
-    } else {
-      // fetch all entries
-      const { data, error } = await supabase
-        .from('config')
-        .select('key, value');
+        if (error) throw error;
+        if (!data) {
+          return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ error: 'Not found' }) };
+        }
+        return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ key, value: data.value }) };
+      } else {
+        const { data, error } = await supabase
+          .from('config')
+          .select('key, value');
 
-      if (error) {
-        return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+        if (error) throw error;
+        return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(data) };
       }
-      return {
-        statusCode: 200,
-        body: JSON.stringify(data),
-      };
     }
-  }
 
-  // 2) POST or PUT: create or update an entry
-  if (httpMethod === 'POST' || httpMethod === 'PUT') {
-    let payload;
-    try {
-      payload = JSON.parse(body || '{}');
-    } catch {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) };
-    }
+    // Require authentication for write operations
+    const user = await requireUser(event);
+    if (user.statusCode) return user;
+
+    const payload = JSON.parse(body || '{}');
     const { key, value } = payload;
+    
     if (!key || value == null) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Missing key or value' }),
-      };
+      return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Missing key or value' }) };
     }
 
-    // upsert (insert or update)
-    const { data, error } = await supabase
-      .from('config')
-      .upsert([{ key, value }], { onConflict: ['key'] })
-      .select()
-      .single();
+    // POST - Create new config (fails if exists)
+    if (httpMethod === 'POST') {
+      const { data, error } = await supabase
+        .from('config')
+        .insert([{ key, value }])
+        .select()
+        .single();
 
-    if (error) {
-      return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+      if (error) {
+        if (error.code === '23505') { // unique constraint violation
+          return { statusCode: 409, headers: corsHeaders, body: JSON.stringify({ error: 'Config key already exists' }) };
+        }
+        throw error;
+      }
+      return { statusCode: 201, headers: corsHeaders, body: JSON.stringify(data) };
     }
-    return {
-      statusCode: httpMethod === 'POST' ? 201 : 200,
-      body: JSON.stringify(data),
-    };
+
+    // PUT - Update existing config
+    if (httpMethod === 'PUT') {
+      const { data, error } = await supabase
+        .from('config')
+        .update({ value })
+        .eq('key', key)
+        .select()
+        .single();
+
+      if (error) throw error;
+      if (!data) {
+        return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ error: 'Config key not found' }) };
+      }
+      return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(data) };
+    }
+
+    return { statusCode: 405, headers: corsHeaders, body: JSON.stringify({ error: 'Method Not Allowed' }) };
+  } catch (error) {
+    return { statusCode: 500, headers: corsHeaders, body: JSON.stringify({ error: error.message }) };
   }
-
-  // 3) Method not allowed
-  return {
-    statusCode: 405,
-    body: JSON.stringify({ error: 'Method Not Allowed' }),
-  };
 };
