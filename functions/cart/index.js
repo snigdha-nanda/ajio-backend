@@ -1,5 +1,5 @@
 
-const supabase = require('../supabase');
+const supabase = require('../../supabase');
 
 exports.handler = async (event) => {
   const { httpMethod, queryStringParameters, body } = event;
