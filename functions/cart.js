@@ -27,23 +27,23 @@ exports.handler = async (event) => {
     return { statusCode: 201, body: JSON.stringify({ cartId: data.id }) };
   }
 
-  // 2) Read: either get items for a cart, or lookup cart by user
+  // 2) GET cart items OR lookup cart by user
   if (httpMethod === 'GET') {
-    const { id, userId } = queryStringParameters || {};
+    const { id: cartId, userId } = queryStringParameters || {};
 
-    // 2a) GET /cart?id={cartId} → list of { product_id, quantity }
-    if (id) {
+    // 2a) Get items by cartId
+    if (cartId) {
       const { data, error } = await supabase
         .from('cart_items')
         .select('product_id, quantity')
-        .eq('cart_id', id);
+        .eq('cart_id', cartId);
       if (error) {
         return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
       }
       return { statusCode: 200, body: JSON.stringify(data) };
     }
 
-    // 2b) GET /cart?userId={userId} → { cartId }
+    // 2b) Lookup cartId by userId
     if (userId) {
       const { data, error } = await supabase
         .from('carts')
@@ -59,26 +59,23 @@ exports.handler = async (event) => {
       return { statusCode: 200, body: JSON.stringify({ cartId: data.id }) };
     }
 
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'Missing id or userId query parameter' }),
-    };
+    return { statusCode: 400, body: JSON.stringify({ error: 'Provide ?id=<cartId> or ?userId=<userId>' }) };
   }
 
-  // 3) Update/Add a cart item
+  // 3) Add or update a single cart item
   if (httpMethod === 'PUT') {
-    const { id } = queryStringParameters || {};
-    if (!id) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Missing cartId (id) query parameter' }) };
+    const { id: cartId } = queryStringParameters || {};
+    if (!cartId) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Missing cartId (use ?id=)' }) };
     }
 
-    let upd;
+    let payload;
     try {
-      upd = JSON.parse(body || '{}');
+      payload = JSON.parse(body || '{}');
     } catch {
       return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) };
     }
-    const { productId, quantity } = upd;
+    const { productId, quantity } = payload;
     if (!productId || quantity == null) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Missing productId or quantity' }) };
     }
@@ -86,7 +83,7 @@ exports.handler = async (event) => {
     const { error } = await supabase
       .from('cart_items')
       .upsert(
-        { cart_id: id, product_id: productId, quantity },
+        { cart_id: cartId, product_id: productId, quantity },
         { onConflict: ['cart_id', 'product_id'] }
       );
     if (error) {
@@ -95,9 +92,6 @@ exports.handler = async (event) => {
     return { statusCode: 200, body: JSON.stringify({ productId, quantity }) };
   }
 
-  // 4) Method not allowed
-  return {
-    statusCode: 405,
-    body: JSON.stringify({ error: 'Method Not Allowed' })
-  };
+  // 4) Method Not Allowed
+  return { statusCode: 405, body: JSON.stringify({ error: 'Method Not Allowed' }) };
 };

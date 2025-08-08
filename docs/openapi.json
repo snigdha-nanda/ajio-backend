@@ -34,25 +34,7 @@
                 "application/json": {
                   "schema": {
                     "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/ProductSummary"
-                    }
-                  },
-                  "examples": {
-                    "sample": {
-                      "value": [
-                        {
-                          "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                          "name": "Classic Leather Jacket",
-                          "image": "https://.../products/jacket-123.png"
-                        },
-                        {
-                          "id": "7cf35f64-5717-4562-b3fc-2c963f66afa7",
-                          "name": "Sport Running Shoes",
-                          "image": "https://.../products/shoes-456.png"
-                        }
-                      ]
-                    }
+                    "items": { "$ref": "#/components/schemas/ProductSummary" }
                   }
                 }
               }
@@ -61,12 +43,100 @@
               "description": "Internal server error",
               "content": {
                 "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Error"
-                  },
-                  "example": {
-                    "error": "Database connection failed"
-                  }
+                  "schema": { "$ref": "#/components/schemas/Error" }
+                }
+              }
+            }
+          }
+        },
+        "post": {
+          "tags": ["Products"],
+          "summary": "Create a new product",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProductCreateRequest" }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Created product",
+              "content": {
+                "application/json": {
+                  "schema": { "$ref": "#/components/schemas/ProductDetail" }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid request",
+              "content": {
+                "application/json": {
+                  "schema": { "$ref": "#/components/schemas/Error" }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": { "$ref": "#/components/schemas/Error" }
+                }
+              }
+            }
+          }
+        },
+        "put": {
+          "tags": ["Products"],
+          "summary": "Update a product",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "query",
+              "required": true,
+              "schema": { "type": "string", "format": "uuid" },
+              "description": "UUID of the product to update"
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProductUpdateRequest" }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Updated product",
+              "content": {
+                "application/json": {
+                  "schema": { "$ref": "#/components/schemas/ProductDetail" }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid request",
+              "content": {
+                "application/json": {
+                  "schema": { "$ref": "#/components/schemas/Error" }
+                }
+              }
+            },
+            "404": {
+              "description": "Product not found",
+              "content": {
+                "application/json": {
+                  "schema": { "$ref": "#/components/schemas/Error" }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": { "$ref": "#/components/schemas/Error" }
                 }
               }
             }
@@ -77,17 +147,12 @@
         "get": {
           "tags": ["Products"],
           "summary": "Get product details",
-          "description": "Returns detailed information for a single product.",
           "parameters": [
             {
               "name": "id",
               "in": "path",
               "required": true,
-              "description": "UUID of the product",
-              "schema": {
-                "type": "string",
-                "format": "uuid"
-              }
+              "schema": { "type": "string", "format": "uuid" }
             }
           ],
           "responses": {
@@ -95,9 +160,7 @@
               "description": "Product detail",
               "content": {
                 "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ProductDetail"
-                  }
+                  "schema": { "$ref": "#/components/schemas/ProductDetail" }
                 }
               }
             },
@@ -105,12 +168,7 @@
               "description": "Product not found",
               "content": {
                 "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Error"
-                  },
-                  "example": {
-                    "error": "Product not found"
-                  }
+                  "schema": { "$ref": "#/components/schemas/Error" }
                 }
               }
             },
@@ -118,9 +176,7 @@
               "description": "Internal server error",
               "content": {
                 "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Error"
-                  }
+                  "schema": { "$ref": "#/components/schemas/Error" }
                 }
               }
             }
@@ -131,17 +187,11 @@
         "post": {
           "tags": ["Cart"],
           "summary": "Create a new cart",
-          "description": "Creates a new cart for a given user.",
           "requestBody": {
             "required": true,
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CartCreateRequest"
-                },
-                "example": {
-                  "userId": "user-123"
-                }
+                "schema": { "$ref": "#/components/schemas/CartCreateRequest" }
               }
             }
           },
@@ -150,12 +200,7 @@
               "description": "Cart created",
               "content": {
                 "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/CartCreateResponse"
-                  },
-                  "example": {
-                    "cartId": "5e1d6f64-5717-4562-b3fc-2c963f66afb0"
-                  }
+                  "schema": { "$ref": "#/components/schemas/CartCreateResponse" }
                 }
               }
             },
@@ -163,12 +208,7 @@
               "description": "Invalid request",
               "content": {
                 "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Error"
-                  },
-                  "example": {
-                    "error": "Missing userId"
-                  }
+                  "schema": { "$ref": "#/components/schemas/Error" }
                 }
               }
             },
@@ -176,43 +216,51 @@
               "description": "Internal server error",
               "content": {
                 "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Error"
-                  }
+                  "schema": { "$ref": "#/components/schemas/Error" }
                 }
               }
             }
           }
-        }
-      },
-      "/cart/{cartId}": {
+        },
         "get": {
           "tags": ["Cart"],
-          "summary": "Get cart items",
-          "description": "Returns list of product IDs and quantities for a cart.",
+          "summary": "Get cart items or lookup cart by user",
           "parameters": [
             {
-              "name": "cartId",
-              "in": "path",
-              "required": true,
-              "schema": {
-                "type": "string",
-                "format": "uuid"
-              },
+              "name": "id",
+              "in": "query",
+              "schema": { "type": "string", "format": "uuid" },
               "description": "UUID of the cart"
+            },
+            {
+              "name": "userId",
+              "in": "query",
+              "schema": { "type": "string" },
+              "description": "User identifier"
             }
           ],
           "responses": {
             "200": {
-              "description": "Array of cart items",
+              "description": "Cart items or cart ID",
               "content": {
                 "application/json": {
                   "schema": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/CartItem"
-                    }
+                    "oneOf": [
+                      {
+                        "type": "array",
+                        "items": { "$ref": "#/components/schemas/CartItem" }
+                      },
+                      { "$ref": "#/components/schemas/CartCreateResponse" }
+                    ]
                   }
+                }
+              }
+            },
+            "400": {
+              "description": "Missing query parameter",
+              "content": {
+                "application/json": {
+                  "schema": { "$ref": "#/components/schemas/Error" }
                 }
               }
             },
@@ -220,9 +268,7 @@
               "description": "Cart not found",
               "content": {
                 "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Error"
-                  }
+                  "schema": { "$ref": "#/components/schemas/Error" }
                 }
               }
             },
@@ -230,9 +276,7 @@
               "description": "Internal server error",
               "content": {
                 "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Error"
-                  }
+                  "schema": { "$ref": "#/components/schemas/Error" }
                 }
               }
             }
@@ -241,16 +285,12 @@
         "put": {
           "tags": ["Cart"],
           "summary": "Add or update a cart item",
-          "description": "Upserts a single product/quantity pair in the cart.",
           "parameters": [
             {
-              "name": "cartId",
-              "in": "path",
+              "name": "id",
+              "in": "query",
               "required": true,
-              "schema": {
-                "type": "string",
-                "format": "uuid"
-              },
+              "schema": { "type": "string", "format": "uuid" },
               "description": "UUID of the cart"
             }
           ],
@@ -258,13 +298,7 @@
             "required": true,
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CartItemRequest"
-                },
-                "example": {
-                  "productId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                  "quantity": 2
-                }
+                "schema": { "$ref": "#/components/schemas/CartItemRequest" }
               }
             }
           },
@@ -273,9 +307,7 @@
               "description": "Upserted cart item",
               "content": {
                 "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/CartItemRequest"
-                  }
+                  "schema": { "$ref": "#/components/schemas/CartItemRequest" }
                 }
               }
             },
@@ -283,9 +315,7 @@
               "description": "Invalid request",
               "content": {
                 "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Error"
-                  }
+                  "schema": { "$ref": "#/components/schemas/Error" }
                 }
               }
             },
@@ -293,9 +323,7 @@
               "description": "Cart not found",
               "content": {
                 "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Error"
-                  }
+                  "schema": { "$ref": "#/components/schemas/Error" }
                 }
               }
             },
@@ -303,62 +331,7 @@
               "description": "Internal server error",
               "content": {
                 "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Error"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "/cart/user/{userId}": {
-        "get": {
-          "tags": ["Cart"],
-          "summary": "Get cart ID by user",
-          "description": "Returns the cart ID associated with a given user.",
-          "parameters": [
-            {
-              "name": "userId",
-              "in": "path",
-              "required": true,
-              "schema": {
-                "type": "string"
-              },
-              "description": "User identifier"
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "Cart ID lookup",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/CartCreateResponse"
-                  },
-                  "example": {
-                    "cartId": "5e1d6f64-5717-4562-b3fc-2c963f66afb0"
-                  }
-                }
-              }
-            },
-            "404": {
-              "description": "Cart not found for user",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Error"
-                  }
-                }
-              }
-            },
-            "500": {
-              "description": "Internal server error",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Error"
-                  }
+                  "schema": { "$ref": "#/components/schemas/Error" }
                 }
               }
             }
@@ -369,28 +342,21 @@
         "get": {
           "tags": ["Documentation"],
           "summary": "Get API documentation",
-          "description": "Returns the OpenAPI JSON specification for this API.",
+          "description": "Returns the OpenAPI JSON specification.",
           "responses": {
             "200": {
-              "description": "OpenAPI JSON document",
+              "description": "OpenAPI document",
               "content": {
                 "application/json": {
-                  "schema": {
-                    "type": "object"
-                  }
+                  "schema": { "type": "object" }
                 }
               }
             },
             "500": {
-              "description": "Unable to load documentation",
+              "description": "Error loading documentation",
               "content": {
                 "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Error"
-                  },
-                  "example": {
-                    "error": "Could not load API documentation."
-                  }
+                  "schema": { "$ref": "#/components/schemas/Error" }
                 }
               }
             }
@@ -404,112 +370,76 @@
           "type": "object",
           "required": ["id", "name", "image"],
           "properties": {
-            "id": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "name": {
-              "type": "string"
-            },
-            "image": {
-              "type": "string",
-              "format": "uri"
-            }
+            "id": { "type": "string", "format": "uuid" },
+            "name": { "type": "string" },
+            "image": { "type": "string", "format": "uri" }
           }
         },
         "ProductDetail": {
           "type": "object",
-          "required": [
-            "title",
-            "description",
-            "actual_price",
-            "discounted_price",
-            "discount_percentage"
-          ],
+          "required": ["title", "description", "actual_price", "discounted_price", "discount_percentage"],
           "properties": {
-            "title": {
-              "type": "string"
-            },
-            "description": {
-              "type": "string"
-            },
-            "short_description": {
-              "type": "string"
-            },
-            "ratings": {
-              "type": "number"
-            },
-            "review_count": {
-              "type": "integer"
-            },
-            "actual_price": {
-              "type": "number"
-            },
-            "discounted_price": {
-              "type": "number"
-            },
-            "discount_percentage": {
-              "type": "number"
-            },
-            "additional_details": {
-              "type": "object",
-              "additionalProperties": true
-            },
-            "image_path": {
-              "type": "string"
-            }
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "short_description": { "type": "string" },
+            "ratings": { "type": "number" },
+            "review_count": { "type": "integer" },
+            "actual_price": { "type": "number" },
+            "discounted_price": { "type": "number" },
+            "discount_percentage": { "type": "number" },
+            "additional_details": { "type": "object", "additionalProperties": true },
+            "image_path": { "type": "string" }
+          }
+        },
+        "ProductCreateRequest": {
+          "allOf": [
+            { "$ref": "#/components/schemas/ProductDetail" }
+          ]
+        },
+        "ProductUpdateRequest": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "short_description": { "type": "string" },
+            "ratings": { "type": "number" },
+            "review_count": { "type": "integer" },
+            "actual_price": { "type": "number" },
+            "discounted_price": { "type": "number" },
+            "discount_percentage": { "type": "number" },
+            "additional_details": { "type": "object", "additionalProperties": true },
+            "image_path": { "type": "string" }
           }
         },
         "CartCreateRequest": {
           "type": "object",
           "required": ["userId"],
-          "properties": {
-            "userId": {
-              "type": "string"
-            }
-          }
+          "properties": { "userId": { "type": "string" } }
         },
         "CartCreateResponse": {
           "type": "object",
-          "properties": {
-            "cartId": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
+          "properties": { "cartId": { "type": "string", "format": "uuid" } }
         },
         "CartItem": {
           "type": "object",
           "required": ["product_id", "quantity"],
           "properties": {
-            "product_id": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "quantity": {
-              "type": "integer"
-            }
+            "product_id": { "type": "string", "format": "uuid" },
+            "quantity": { "type": "integer" }
           }
         },
         "CartItemRequest": {
           "type": "object",
           "required": ["productId", "quantity"],
           "properties": {
-            "productId": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "quantity": {
-              "type": "integer"
-            }
+            "productId": { "type": "string", "format": "uuid" },
+            "quantity": { "type": "integer" }
           }
         },
         "Error": {
           "type": "object",
           "properties": {
-            "error": {
-              "type": "string"
-            }
+            "error": { "type": "string" }
           }
         }
       }
