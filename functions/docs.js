@@ -1,7 +1,7 @@
 const corsHeaders = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Dev-Key, X-User-Id',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
 };
 
@@ -20,12 +20,6 @@ const openApiSpec = {
   ],
   "components": {
     "securitySchemes": {
-      "DevAuth": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "X-Dev-Key",
-        "description": "Development API key with X-User-Id header"
-      },
       "BearerAuth": {
         "type": "http",
         "scheme": "bearer",

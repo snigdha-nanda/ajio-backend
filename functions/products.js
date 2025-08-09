@@ -4,7 +4,7 @@ const { requireUser } = require('./auth');
 const corsHeaders = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Dev-Key, X-User-Id',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
 };
 
@@ -48,7 +48,7 @@ exports.handler = async (event) => {
         // Get all products
         const { data, error } = await supabase
           .from('products')
-          .select('id, title, image_path');
+          .select('id, title, image_path, discounted_price, actual_price, short_description');
 
         if (error) throw error;
 
@@ -56,6 +56,9 @@ exports.handler = async (event) => {
           id: p.id,
           name: p.title,
           image: p.image_path,
+          price: p.discounted_price,
+          actualPrice: p.actual_price,
+          shortDescription: p.short_description,
         }));
         return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(products) };
       }

@@ -5,7 +5,7 @@ const { requireUser } = require('./auth');
 const corsHeaders = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Dev-Key, X-User-Id',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
 };
 
@@ -93,6 +93,23 @@ exports.handler = async (event) => {
         );
       if (error) throw error;
       return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ productId, quantity }) };
+    }
+
+    // DELETE - Remove cart item completely
+    if (httpMethod === 'DELETE') {
+      const { id: cartId, productId } = queryStringParameters || {};
+      if (!cartId || !productId) {
+        return { statusCode: 400, headers: corsHeaders, body: JSON.stringify({ error: 'Missing cartId or productId' }) };
+      }
+
+      const { error } = await supabase
+        .from('cart_items')
+        .delete()
+        .eq('cart_id', cartId)
+        .eq('product_id', productId);
+      
+      if (error) throw error;
+      return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ message: 'Item removed' }) };
     }
 
     return { statusCode: 405, headers: corsHeaders, body: JSON.stringify({ error: 'Method Not Allowed' }) };
