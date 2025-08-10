@@ -10,12 +10,16 @@ const openApiSpec = {
   "info": {
     "title": "AJIO Clone API",
     "version": "1.0.0",
-    "description": "E-commerce backend API with authentication"
+    "description": "E-commerce backend API with Firebase authentication"
   },
   "servers": [
     {
-      "url": "/.netlify/functions",
-      "description": "Netlify Functions"
+      "url": "https://ajio-backend-api.netlify.app/.netlify/functions",
+      "description": "Production"
+    },
+    {
+      "url": "http://localhost:8888/.netlify/functions",
+      "description": "Development"
     }
   ],
   "components": {
@@ -23,111 +27,178 @@ const openApiSpec = {
       "BearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "description": "Firebase ID token"
+        "description": "Firebase JWT token"
       }
     }
   },
   "paths": {
     "/products": {
       "get": {
-        "summary": "Get all products",
-        "responses": {
-          "200": {
-            "description": "List of products",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": { "type": "string" },
-                      "name": { "type": "string" },
-                      "image": { "type": "string" }
-                    }
-                  }
-                }
-              }
-            }
+        "summary": "Get products with optional filtering",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["men", "women", "kids"] }
+          },
+          {
+            "name": "subcategory", 
+            "in": "query",
+            "schema": { "type": "string", "enum": ["clothing", "shoes", "accessories"] }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "schema": { "type": "string" }
           }
+        ],
+        "responses": {
+          "200": { "description": "Products list or single product" }
+        }
+      }
+    },
+    "/cart": {
+      "get": {
+        "summary": "Get user cart or cart items",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Cart ID to get items"
+          }
+        ],
+        "responses": {
+          "200": { "description": "Cart ID or cart items" },
+          "401": { "description": "Unauthorized" }
         }
       },
       "post": {
-        "summary": "Create product",
-        "security": [{ "DevAuth": [] }, { "BearerAuth": [] }],
+        "summary": "Create new cart",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "201": { "description": "Cart created" },
+          "401": { "description": "Unauthorized" }
+        }
+      },
+      "put": {
+        "summary": "Update cart item",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["title", "description", "actual_price", "discounted_price"],
                 "properties": {
-                  "title": { "type": "string" },
-                  "description": { "type": "string" },
-                  "actual_price": { "type": "number" },
-                  "discounted_price": { "type": "number" }
+                  "productId": { "type": "string" },
+                  "quantity": { "type": "integer" }
                 }
               }
             }
           }
         },
         "responses": {
-          "201": { "description": "Product created" },
-          "400": { "description": "Missing required fields" },
+          "200": { "description": "Cart updated" },
+          "401": { "description": "Unauthorized" }
+        }
+      },
+      "delete": {
+        "summary": "Remove item from cart",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "productId",
+            "in": "query", 
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Item removed" },
           "401": { "description": "Unauthorized" }
         }
       }
     },
-    "/cart": {
+    "/orders": {
       "get": {
-        "summary": "Get user cart",
-        "security": [{ "DevAuth": [] }, { "BearerAuth": [] }],
+        "summary": "Get user order history",
+        "security": [{ "BearerAuth": [] }],
         "responses": {
-          "200": { "description": "Cart ID" },
-          "404": { "description": "Cart not found" },
+          "200": { "description": "List of orders" },
           "401": { "description": "Unauthorized" }
         }
       },
       "post": {
-        "summary": "Create cart",
-        "security": [{ "DevAuth": [] }, { "BearerAuth": [] }],
+        "summary": "Create new order",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "product_id": { "type": "string" },
+                        "quantity": { "type": "integer" },
+                        "price": { "type": "number" }
+                      }
+                    }
+                  },
+                  "total_amount": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
         "responses": {
-          "201": { "description": "Cart created" },
-          "409": { "description": "Cart already exists" },
+          "201": { "description": "Order created" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/profile": {
+      "get": {
+        "summary": "Get user profile",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "User profile data" },
           "401": { "description": "Unauthorized" }
         }
       }
     },
     "/config": {
       "get": {
-        "summary": "Get all config values",
-        "responses": {
-          "200": { "description": "Config values" }
-        }
-      },
-      "post": {
-        "summary": "Create config value",
-        "security": [{ "DevAuth": [] }, { "BearerAuth": [] }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["key", "value"],
-                "properties": {
-                  "key": { "type": "string" },
-                  "value": {}
-                }
-              }
-            }
+        "summary": "Get configuration value",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "schema": { "type": "string" }
           }
-        },
+        ],
         "responses": {
-          "201": { "description": "Config created" },
-          "409": { "description": "Key already exists" },
-          "401": { "description": "Unauthorized" }
+          "200": { "description": "Configuration value" }
         }
       }
     }
