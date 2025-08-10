@@ -18,7 +18,7 @@ exports.handler = async (event) => {
   try {
     // GET products (public access)
     if (httpMethod === 'GET') {
-      const id = queryStringParameters?.id;
+      const { id, category, subcategory } = queryStringParameters || {};
       
       if (id) {
         // Get single product
@@ -34,7 +34,9 @@ exports.handler = async (event) => {
             discounted_price,
             discount_percentage,
             additional_details,
-            image_path
+            image_path,
+            category,
+            subcategory
           `)
           .eq('id', id)
           .maybeSingle();
@@ -45,11 +47,22 @@ exports.handler = async (event) => {
         }
         return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(product) };
       } else {
-        // Get all products
-        const { data, error } = await supabase
+        // Build query for products
+        let query = supabase
           .from('products')
-          .select('id, title, image_path, discounted_price, actual_price, short_description');
+          .select('id, title, image_path, discounted_price, actual_price, short_description, category, subcategory');
 
+        // Filter by category if provided
+        if (category) {
+          query = query.eq('category', category);
+        }
+
+        // Filter by subcategory if provided
+        if (subcategory) {
+          query = query.eq('subcategory', subcategory);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
 
         const products = data.map((p) => ({
@@ -59,6 +72,8 @@ exports.handler = async (event) => {
           price: p.discounted_price,
           actualPrice: p.actual_price,
           shortDescription: p.short_description,
+          category: p.category,
+          subcategory: p.subcategory,
         }));
         return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(products) };
       }
